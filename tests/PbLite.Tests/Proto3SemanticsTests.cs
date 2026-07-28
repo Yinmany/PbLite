@@ -17,17 +17,17 @@ namespace PbLite.Tests
     public class Proto3SemanticsTests
     {
         [Fact]
-        public void EmptyMessage_ScalarDefaults_AreWritten()
+        public void EmptyMessage_ScalarDefaults_AreSkipped()
         {
-            // 我们不对非 nullable 标量做默认值跳过（int=0, bool=false 等仍然写入）
+            // proto3 语义：非 nullable 标量的默认值（int=0, bool=false 等）不写入
             var msg = new TestMessage();
 
             var writer = new ArrayBufferWriter<byte>();
             TestMessageSerializer.Instance.Serialize(writer, msg);
             int written = writer.WrittenCount;
 
-            // 7 个标量字段各写 tag+value，string("") 跳过，nullable null 跳过，空集合跳过
-            Assert.True(written > 0);
+            // 所有标量字段都是默认值，string("") 跳过，nullable null 跳过，空集合跳过
+            Assert.Equal(0, written);
         }
 
         [Fact]

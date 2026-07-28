@@ -16,6 +16,8 @@ namespace PbLite
 
         public bool End => _reader.End;
 
+        public long Remaining => _reader.Remaining;
+
         #region VarInt
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadVarInt64()

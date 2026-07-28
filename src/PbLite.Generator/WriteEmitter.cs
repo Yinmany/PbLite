@@ -93,6 +93,11 @@ namespace PbLite.Generator
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    {WriteInt32Call(wire, fieldNumber, accessor + ".Value")};");
                     }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor} != 0)");
+                        sb.AppendLine($"{indent}    {WriteInt32Call(wire, fieldNumber, accessor)};");
+                    }
                     else
                         sb.AppendLine($"{indent}{WriteInt32Call(wire, fieldNumber, accessor)};");
                     break;
@@ -101,6 +106,11 @@ namespace PbLite.Generator
                     {
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    {WriteInt64Call(wire, fieldNumber, accessor + ".Value")};");
+                    }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor} != 0)");
+                        sb.AppendLine($"{indent}    {WriteInt64Call(wire, fieldNumber, accessor)};");
                     }
                     else
                         sb.AppendLine($"{indent}{WriteInt64Call(wire, fieldNumber, accessor)};");
@@ -111,6 +121,11 @@ namespace PbLite.Generator
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    {WriteUInt32Call(wire, fieldNumber, accessor + ".Value")};");
                     }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor} != 0)");
+                        sb.AppendLine($"{indent}    {WriteUInt32Call(wire, fieldNumber, accessor)};");
+                    }
                     else
                         sb.AppendLine($"{indent}{WriteUInt32Call(wire, fieldNumber, accessor)};");
                     break;
@@ -119,6 +134,11 @@ namespace PbLite.Generator
                     {
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    {WriteUInt64Call(wire, fieldNumber, accessor + ".Value")};");
+                    }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor} != 0)");
+                        sb.AppendLine($"{indent}    {WriteUInt64Call(wire, fieldNumber, accessor)};");
                     }
                     else
                         sb.AppendLine($"{indent}{WriteUInt64Call(wire, fieldNumber, accessor)};");
@@ -129,6 +149,11 @@ namespace PbLite.Generator
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    ProtoWriter.WriteFloat(writer, {fieldNumber}, {accessor}.Value);");
                     }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor} != 0f)");
+                        sb.AppendLine($"{indent}    ProtoWriter.WriteFloat(writer, {fieldNumber}, {accessor});");
+                    }
                     else
                         sb.AppendLine($"{indent}ProtoWriter.WriteFloat(writer, {fieldNumber}, {accessor});");
                     break;
@@ -138,6 +163,11 @@ namespace PbLite.Generator
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    ProtoWriter.WriteDouble(writer, {fieldNumber}, {accessor}.Value);");
                     }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor} != 0d)");
+                        sb.AppendLine($"{indent}    ProtoWriter.WriteDouble(writer, {fieldNumber}, {accessor});");
+                    }
                     else
                         sb.AppendLine($"{indent}ProtoWriter.WriteDouble(writer, {fieldNumber}, {accessor});");
                     break;
@@ -146,6 +176,11 @@ namespace PbLite.Generator
                     {
                         sb.AppendLine($"{indent}if ({accessor}.HasValue)");
                         sb.AppendLine($"{indent}    ProtoWriter.WriteBool(writer, {fieldNumber}, {accessor}.Value);");
+                    }
+                    else if (skipDefault)
+                    {
+                        sb.AppendLine($"{indent}if ({accessor})");
+                        sb.AppendLine($"{indent}    ProtoWriter.WriteBool(writer, {fieldNumber}, {accessor});");
                     }
                     else
                         sb.AppendLine($"{indent}ProtoWriter.WriteBool(writer, {fieldNumber}, {accessor});");

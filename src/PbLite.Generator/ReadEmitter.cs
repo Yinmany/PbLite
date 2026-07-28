@@ -38,7 +38,7 @@ namespace PbLite.Generator
             if (kind == CollectionKind.None) return;
 
             string fullName = member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            sb.AppendLine($"            result.{member.Name} ??= new {fullName}();");
+            sb.AppendLine($"            result.{member.Name} ??= new {fullName}(4);");
         }
 
         private static void GenerateReadField(StringBuilder sb, MemberInfo member)
@@ -75,11 +75,18 @@ namespace PbLite.Generator
 
             if (isPacked)
             {
+                string bytesVar = $"_bytes_{memberName}";
+                int minElemSize = GetPackedElementSize(elemType, wire);
+                string capExpr = minElemSize > 1
+                    ? $"(int)({bytesVar}.Length / {minElemSize})"
+                    : $"(int){bytesVar}.Length";
                 string subVar = $"_sub_{memberName}";
                 sb.AppendLine($"                    case {order}:");
                 sb.AppendLine("                        if (wireType == WireType.LengthDelimited)");
                 sb.AppendLine("                        {");
-                sb.AppendLine($"                            var {subVar} = new ProtoReader(reader.ReadBytes());");
+                sb.AppendLine($"                            var {bytesVar} = reader.ReadBytes();");
+                sb.AppendLine($"                            {accessor}.EnsureCapacity({capExpr});");
+                sb.AppendLine($"                            var {subVar} = new ProtoReader({bytesVar});");
                 sb.AppendLine($"                            while (!{subVar}.End)");
                 sb.AppendLine($"                                {accessor}.Add({subReadExpr});");
                 sb.AppendLine("                        }");
@@ -89,7 +96,7 @@ namespace PbLite.Generator
             }
             else if (readExpr != null)
             {
-                sb.AppendLine($"                    case {order}: {accessor}.Add({readExpr}); break;");
+                sb.AppendLine($"                    case {order}: {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64)); {accessor}.Add({readExpr}); break;");
             }
             else if (elemType.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(elemType))
             {
@@ -97,6 +104,7 @@ namespace PbLite.Generator
                 string subVar = $"_sub_{memberName}";
                 sb.AppendLine($"                    case {order}:");
                 sb.AppendLine("                    {");
+                sb.AppendLine($"                        {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64));");
                 sb.AppendLine($"                        var {subVar} = new ProtoReader(reader.ReadBytes());");
                 sb.AppendLine($"                        {accessor}.Add(({elemFullName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, null));");
                 sb.AppendLine("                        break;");
@@ -124,6 +132,7 @@ namespace PbLite.Generator
 
             sb.AppendLine($"                    case {order}:");
             sb.AppendLine("                    {");
+            sb.AppendLine($"                        {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64));");
             sb.AppendLine($"                        var {subVar} = new ProtoReader(reader.ReadBytes());");
             sb.AppendLine($"                        {keyFullName} {keyVar} = default!;");
             sb.AppendLine($"                        {valFullName} {valVar} = default!;");
@@ -237,6 +246,27 @@ namespace PbLite.Generator
                 or SpecialType.System_Single or SpecialType.System_Double
                 or SpecialType.System_Boolean
                 || effective.TypeKind == TypeKind.Enum;
+        }
+
+        private static int GetPackedElementSize(ITypeSymbol type, PbWire wire)
+        {
+            ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
+            ITypeSymbol effective = underlying ?? type;
+            SpecialType st = effective.SpecialType;
+
+            if (effective.TypeKind == TypeKind.Enum)
+                st = SpecialType.System_Int32;
+
+            return st switch
+            {
+                SpecialType.System_Int32 or SpecialType.System_UInt32 or SpecialType.System_Boolean
+                    => wire == PbWire.Fixed32 ? 4 : 1,
+                SpecialType.System_Int64 or SpecialType.System_UInt64
+                    => wire == PbWire.Fixed64 ? 8 : 1,
+                SpecialType.System_Single => 4,
+                SpecialType.System_Double => 8,
+                _ => 1
+            };
         }
     }
 }

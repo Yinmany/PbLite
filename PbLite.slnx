@@ -5,6 +5,7 @@
         <Project Path="src/PbLite.Generator/PbLite.Generator.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/PbLite.Bench/PbLite.Bench.csproj" />
         <Project Path="tests/PbLite.Gen.Tests/PbLite.Gen.Tests.csproj" />
         <Project Path="tests/PbLite.Tests/PbLite.Tests.csproj" Id="acd4dcd7-e823-4aa2-ae16-a3fe4b6b9de5" />
     </Folder>
