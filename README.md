@@ -1,5 +1,7 @@
 # PbLite
 
+[![NuGet](https://img.shields.io/nuget/v/PbLite)](https://www.nuget.org/packages/PbLite)
+
 **面向 C# / Unity / .NET 高性能游戏场景的 Protobuf Wire Format 兼容序列化框架。**
 
 零分配、AOT 友好，适用于游戏客户端与服务端的高频通信场景。
@@ -153,26 +155,6 @@ var message = (ChatMessage)serializer.Deserialize(ref reader, null);
 | group (deprecated) | 不支持 |
 
 > 游戏场景下基本上用不到
-
-# 🏗 Design
-
-```
-src/
-├── PbLite/                    # 运行时库 (ProtoReader / ProtoWriter / IProtoSerializer / Attributes)
-├── PbLite.Generator/          # Source Generator — 从 C# class 生成 Serializer
-└── PbLite.Gen/                # dotnet tool — 从 .proto 文件生成 C# class
-tests/
-├── PbLite.Tests/              # 序列化器单元测试
-└── PbLite.ProtoGen.Tests/          # 代码生成器单元测试
-```
-
-工作流：
-
-```
-.proto → PbLite.Gen → C# class [PbContract/PbMember] → PbLite.Generator → Serializer
-```
-
-运行时只负责 Encode / Decode / Buffer Read / Write，无 Runtime Model、无 Metadata Cache、无 Reflection Pipeline。
 
 # License
 

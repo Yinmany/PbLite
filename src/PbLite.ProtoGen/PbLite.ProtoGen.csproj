@@ -11,6 +11,27 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pblite-gen</ToolCommandName>
     <PackageId>PbLite.ProtoGen</PackageId>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    
+    <!-- AOT 总开关 -->
+    <PublishAot>true</PublishAot>
+    <SelfContained>true</SelfContained>
+    <!-- 裁剪未使用代码（AOT 必须） -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+
+    <!-- 去掉全球化数据，体积立减 5–10 MB -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- 去掉调试符号（发布版建议） -->
+    <StripSymbols>true</StripSymbols>
+
+    <!-- 不生成 PDB（可选，体积更小） -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+
+    <!-- ✅ 去掉非必要异常处理（进一步瘦身） -->
+    <StackTraceSupport>false</StackTraceSupport>
   </PropertyGroup>
 
   <ItemGroup>
