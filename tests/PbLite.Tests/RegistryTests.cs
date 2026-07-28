@@ -8,7 +8,7 @@ namespace PbLite.Tests
         public void ForEach_VisitsAllSerializers()
         {
             var visited = new System.Collections.Generic.List<IProtoSerializer>();
-            ProtoGenerated.ForEach(visited.Add);
+            TestProtoRegistry.Register(visited.Add);
 
             Assert.NotEmpty(visited);
 
@@ -24,7 +24,7 @@ namespace PbLite.Tests
         [Fact]
         public void ForEach_AllImplementIProtoSerializer()
         {
-            ProtoGenerated.ForEach(s =>
+            TestProtoRegistry.Register(s =>
             {
                 Assert.IsAssignableFrom<IProtoSerializer>(s);
             });
@@ -34,7 +34,7 @@ namespace PbLite.Tests
         public void ForEach_DistinctTypes()
         {
             var types = new System.Collections.Generic.HashSet<System.Type>();
-            ProtoGenerated.ForEach(s => types.Add(s.Type));
+            TestProtoRegistry.Register(s => types.Add(s.Type));
 
             Assert.True(types.Count >= 2);
         }

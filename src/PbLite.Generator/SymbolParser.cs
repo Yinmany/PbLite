@@ -12,6 +12,8 @@ namespace PbLite.Generator
         private const string ProtoContractShort = "PbContract";
         private const string ProtoMemberName = "PbMemberAttribute";
         private const string ProtoMemberShort = "PbMember";
+        private const string RegistryAttrName = "PbGenerateRegistryAttribute";
+        private const string RegistryAttrShort = "PbGenerateRegistry";
 
         public static TypeInfo? GetTypeInfo(GeneratorSyntaxContext ctx)
         {
@@ -60,6 +62,23 @@ namespace PbLite.Generator
 
             return new TypeInfo(symbol.Name, ns, fullyQualifiedName,
                 serializerName, serializerFullName, members);
+        }
+
+        public static RegistryInfo? GetRegistryInfo(GeneratorSyntaxContext ctx)
+        {
+            var classDecl = (ClassDeclarationSyntax)ctx.Node;
+            var symbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl) as INamedTypeSymbol;
+            if (symbol == null) return null;
+
+            if (!symbol.GetAttributes().Any(a => a.AttributeClass?.Name is RegistryAttrName or RegistryAttrShort))
+                return null;
+
+            string ns = symbol.ContainingNamespace?.IsGlobalNamespace == true
+                ? ""
+                : symbol.ContainingNamespace?.ToDisplayString() ?? "";
+
+            return new RegistryInfo(symbol.Name, ns, symbol.IsStatic,
+                symbol.Locations.FirstOrDefault() ?? Location.None);
         }
 
         public static bool HasProtoContract(ITypeSymbol type)

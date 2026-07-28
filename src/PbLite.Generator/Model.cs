@@ -48,4 +48,20 @@ namespace PbLite.Generator
             Wire = wire;
         }
     }
+
+    internal sealed class RegistryInfo
+    {
+        public string Name { get; }
+        public string Namespace { get; }
+        public bool IsStatic { get; }
+        public Location Location { get; }
+
+        public RegistryInfo(string name, string ns, bool isStatic, Location location)
+        {
+            Name = name;
+            Namespace = ns;
+            IsStatic = isStatic;
+            Location = location;
+        }
+    }
 }

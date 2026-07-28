@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PbLite;
 
@@ -64,5 +65,13 @@ namespace PbLite.Tests
                 [PbMember(2)] public string Text { get; set; } = "";
             }
         }
+    }
+
+    [PbGenerateRegistry]
+    public partial class TestProtoRegistry
+    {
+        // ForEach is injected by the generator as private static.
+        // This wrapper exposes it for testing.
+        public static void Register(Action<IProtoSerializer> action) => ForEach(action);
     }
 }
