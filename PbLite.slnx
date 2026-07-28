@@ -1,9 +1,11 @@
 <Solution>
     <Folder Name="/src/">
         <Project Path="src/PbLite/PbLite.csproj" Id="843e639f-6f91-4f05-ba2f-2ad277cd5214" />
+        <Project Path="src/PbLite.Gen/PbLite.Gen.csproj" />
         <Project Path="src/PbLite.Generator/PbLite.Generator.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/PbLite.Gen.Tests/PbLite.Gen.Tests.csproj" />
         <Project Path="tests/PbLite.Tests/PbLite.Tests.csproj" Id="acd4dcd7-e823-4aa2-ae16-a3fe4b6b9de5" />
     </Folder>
 </Solution>

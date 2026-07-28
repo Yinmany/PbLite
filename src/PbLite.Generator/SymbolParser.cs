@@ -31,18 +31,20 @@ namespace PbLite.Generator
             {
                 if (member is IPropertySymbol { IsStatic: false } prop)
                 {
-                    var attr = GetProtoMember(prop.GetAttributes());
+                    var attr = GetProtoMemberAttribute(prop.GetAttributes());
                     if (attr == null) continue;
 
+                    int order = (int)attr.ConstructorArguments[0].Value!;
                     bool isReadOnly = prop.SetMethod == null || prop.IsReadOnly;
-                    members.Add(new MemberInfo(prop.Name, prop.Type, attr.Value, isReadOnly));
+                    members.Add(new MemberInfo(prop.Name, prop.Type, order, isReadOnly, GetWire(attr)));
                 }
                 else if (member is IFieldSymbol { IsStatic: false } field)
                 {
-                    var attr = GetProtoMember(field.GetAttributes());
+                    var attr = GetProtoMemberAttribute(field.GetAttributes());
                     if (attr == null) continue;
 
-                    members.Add(new MemberInfo(field.Name, field.Type, attr.Value, field.IsReadOnly));
+                    int order = (int)attr.ConstructorArguments[0].Value!;
+                    members.Add(new MemberInfo(field.Name, field.Type, order, field.IsReadOnly, GetWire(attr)));
                 }
             }
 
@@ -96,23 +98,49 @@ namespace PbLite.Generator
             return CollectionKind.None;
         }
 
+        public static bool IsByteArray(ITypeSymbol type)
+        {
+            return type is IArrayTypeSymbol { ElementType.SpecialType: SpecialType.System_Byte };
+        }
+
+        /// <summary>
+        /// Returns the enum type symbol if the type is an enum or Nullable&lt;Enum&gt;,
+        /// otherwise null.
+        /// </summary>
+        public static ITypeSymbol? GetEnumType(ITypeSymbol type)
+        {
+            ITypeSymbol? underlying = GetNullableUnderlyingType(type);
+            ITypeSymbol effective = underlying ?? type;
+            return effective.TypeKind == TypeKind.Enum ? effective : null;
+        }
+
         private static bool IsProtoContract(INamedTypeSymbol? attrClass)
         {
             if (attrClass == null) return false;
             return attrClass.Name is ProtoContractName or ProtoContractShort;
         }
 
-        private static int? GetProtoMember(ImmutableArray<AttributeData> attrs)
+        private static AttributeData? GetProtoMemberAttribute(ImmutableArray<AttributeData> attrs)
         {
             foreach (var attr in attrs)
             {
                 if (attr.AttributeClass?.Name is ProtoMemberName or ProtoMemberShort)
                 {
                     if (attr.ConstructorArguments.Length > 0)
-                        return (int)attr.ConstructorArguments[0].Value!;
+                        return attr;
                 }
             }
             return null;
+        }
+
+        private static PbWire GetWire(AttributeData attr)
+        {
+            foreach (var kvp in attr.NamedArguments)
+            {
+                if (kvp.Key == "Wire" && kvp.Value.Value is int wireValue)
+                    return (PbWire)wireValue;
+            }
+            return PbWire.Varint;
         }
     }
 }

@@ -5,6 +5,11 @@ namespace PbLite.Generator
 {
     internal enum CollectionKind { None, List, Map }
 
+    /// <summary>
+    /// Mirror of PbLite.PbWire for use within the generator.
+    /// </summary>
+    internal enum PbWire { Varint = 0, ZigZag = 1, Fixed32 = 2, Fixed64 = 3 }
+
     internal sealed class TypeInfo
     {
         public string Name { get; }
@@ -25,13 +30,15 @@ namespace PbLite.Generator
         public ITypeSymbol Type { get; }
         public int Order { get; }
         public bool IsReadOnly { get; }
+        public PbWire Wire { get; }
 
-        public MemberInfo(string name, ITypeSymbol type, int order, bool isReadOnly)
+        public MemberInfo(string name, ITypeSymbol type, int order, bool isReadOnly, PbWire wire)
         {
             Name = name;
             Type = type;
             Order = order;
             IsReadOnly = isReadOnly;
+            Wire = wire;
         }
     }
 }

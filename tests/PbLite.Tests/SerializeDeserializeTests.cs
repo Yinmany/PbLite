@@ -9,7 +9,8 @@ namespace PbLite.Tests
         private static (T result, int bytes) RoundTrip<T>(IProtoSerializer serializer, T value)
         {
             var writer = new ArrayBufferWriter<byte>();
-            int written = serializer.Serialize(writer, value!);
+            serializer.Serialize(writer, value!);
+            int written = writer.WrittenCount;
 
             var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
             var result = (T)serializer.Deserialize(ref reader, null);
@@ -49,7 +50,8 @@ namespace PbLite.Tests
             var msg = new TestMessage();
 
             var writer = new ArrayBufferWriter<byte>();
-            int written = TestMessageSerializer.Instance.Serialize(writer, msg);
+            TestMessageSerializer.Instance.Serialize(writer, msg);
+            int written = writer.WrittenCount;
 
             var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
             var result = (TestMessage)TestMessageSerializer.Instance.Deserialize(ref reader, null);

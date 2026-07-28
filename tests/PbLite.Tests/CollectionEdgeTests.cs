@@ -8,7 +8,8 @@ namespace PbLite.Tests
         private static (T result, int bytes) RoundTrip<T>(IProtoSerializer serializer, T value)
         {
             var writer = new ArrayBufferWriter<byte>();
-            int written = serializer.Serialize(writer, value!);
+            serializer.Serialize(writer, value!);
+            int written = writer.WrittenCount;
             var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
             var result = (T)serializer.Deserialize(ref reader, null);
             return (result, written);
@@ -20,7 +21,8 @@ namespace PbLite.Tests
             var msg = new CollectionOnlyMessage { IntList = new() };
 
             var writer = new ArrayBufferWriter<byte>();
-            int written = CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            int written = writer.WrittenCount;
 
             Assert.Equal(0, written);
         }
@@ -31,7 +33,8 @@ namespace PbLite.Tests
             var msg = new CollectionOnlyMessage { StringList = new() };
 
             var writer = new ArrayBufferWriter<byte>();
-            int written = CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            int written = writer.WrittenCount;
 
             Assert.Equal(0, written);
         }
@@ -42,7 +45,8 @@ namespace PbLite.Tests
             var msg = new CollectionOnlyMessage { IntStringMap = new() };
 
             var writer = new ArrayBufferWriter<byte>();
-            int written = CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            int written = writer.WrittenCount;
 
             Assert.Equal(0, written);
         }
@@ -56,7 +60,7 @@ namespace PbLite.Tests
             msg.IntStringMap[1] = "second"; // 同 key 覆盖
 
             var writer = new ArrayBufferWriter<byte>();
-            int written = CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
+            CollectionOnlyMessageSerializer.Instance.Serialize(writer, msg);
 
             var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
             var result = (CollectionOnlyMessage)CollectionOnlyMessageSerializer.Instance.Deserialize(ref reader, null);

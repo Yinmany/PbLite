@@ -16,17 +16,16 @@ namespace PbLite
         /// <summary>
         /// 序列化
         /// </summary>
-        /// <typeparam name="TWriter"></typeparam>
-        /// <param name="writer"></param>
-        /// <param name="value"></param>
-        int Serialize<TWriter>(TWriter writer, object value) where TWriter : IBufferWriter<byte>;
+        void Serialize<TWriter>(TWriter writer, object value) where TWriter : IBufferWriter<byte>;
+
+        /// <summary>
+        /// 计算序列化后的字节大小（不含外层 tag + length）
+        /// </summary>
+        int GetSize(object value);
 
         /// <summary>
         /// 反序列化
         /// </summary>
-        /// <param name="reader"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         object Deserialize(ref ProtoReader reader, object? value);
     }
 }

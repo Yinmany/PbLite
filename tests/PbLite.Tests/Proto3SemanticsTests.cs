@@ -23,7 +23,8 @@ namespace PbLite.Tests
             var msg = new TestMessage();
 
             var writer = new ArrayBufferWriter<byte>();
-            int written = TestMessageSerializer.Instance.Serialize(writer, msg);
+            TestMessageSerializer.Instance.Serialize(writer, msg);
+            int written = writer.WrittenCount;
 
             // 7 个标量字段各写 tag+value，string("") 跳过，nullable null 跳过，空集合跳过
             Assert.True(written > 0);

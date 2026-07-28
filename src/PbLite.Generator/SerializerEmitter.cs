@@ -37,6 +37,8 @@ namespace PbLite.Generator
 
             WriteEmitter.Generate(sb, info);
             sb.AppendLine();
+            WriteEmitter.GenerateGetSize(sb, info);
+            sb.AppendLine();
             ReadEmitter.Generate(sb, info);
 
             sb.AppendLine("    }");

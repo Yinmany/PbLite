@@ -50,7 +50,7 @@ namespace PbLite.Generator
 
             if (kind == CollectionKind.List && elemType != null)
             {
-                GenerateListRead(sb, order, accessor, elemType, member.Name);
+                GenerateListRead(sb, order, accessor, elemType, member.Name, member.Wire);
                 return;
             }
 
@@ -60,14 +60,14 @@ namespace PbLite.Generator
                 return;
             }
 
-            GenerateReadValue(sb, member.Type, order, accessor, "reader", member.Name, "                    ");
+            GenerateReadValue(sb, member.Type, order, accessor, "reader", member.Name, "                    ", member.Wire);
         }
 
         private static void GenerateListRead(StringBuilder sb, int order, string accessor,
-            ITypeSymbol elemType, string memberName)
+            ITypeSymbol elemType, string memberName, PbWire wire)
         {
-            string? readExpr = GetReadExpression(elemType, "reader");
-            string? subReadExpr = GetReadExpression(elemType, "_sub_" + memberName);
+            string? readExpr = GetReadExpression(elemType, "reader", wire);
+            string? subReadExpr = GetReadExpression(elemType, "_sub_" + memberName, wire);
             string elemFullName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             bool isPacked = readExpr != null && subReadExpr != null &&
@@ -143,9 +143,9 @@ namespace PbLite.Generator
         }
 
         private static void GenerateReadValue(StringBuilder sb, ITypeSymbol type, int order,
-            string accessor, string readerVar, string memberName, string indent)
+            string accessor, string readerVar, string memberName, string indent, PbWire wire = PbWire.Varint)
         {
-            string? readExpr = GetReadExpression(type, readerVar);
+            string? readExpr = GetReadExpression(type, readerVar, wire);
             string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             if (readExpr != null)
@@ -170,17 +170,55 @@ namespace PbLite.Generator
             sb.AppendLine($"{indent}// case {order}: unsupported type - skipped");
         }
 
-        private static string? GetReadExpression(ITypeSymbol type, string readerVar)
+        private static string? GetReadExpression(ITypeSymbol type, string readerVar, PbWire wire = PbWire.Varint)
         {
+            // byte[]
+            if (SymbolParser.IsByteArray(type))
+            {
+                return $"{readerVar}.ReadBytes().ToArray()";
+            }
+
+            // enum (including Nullable<Enum>)
+            var enumType = SymbolParser.GetEnumType(type);
+            if (enumType != null)
+            {
+                string enumFullName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                string readCall = wire switch
+                {
+                    PbWire.ZigZag  => $"{readerVar}.ReadSInt32()",
+                    PbWire.Fixed32 => $"{readerVar}.ReadSFixed32()",
+                    _ => $"{readerVar}.ReadInt32()",
+                };
+                return $"({enumFullName}){readCall}";
+            }
+
             ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
             SpecialType st = underlying?.SpecialType ?? type.SpecialType;
 
             return st switch
             {
-                SpecialType.System_Int32 => $"{readerVar}.ReadInt32()",
-                SpecialType.System_Int64 => $"{readerVar}.ReadInt64()",
-                SpecialType.System_UInt32 => $"{readerVar}.ReadUInt32()",
-                SpecialType.System_UInt64 => $"{readerVar}.ReadUInt64()",
+                SpecialType.System_Int32 => wire switch
+                {
+                    PbWire.ZigZag  => $"{readerVar}.ReadSInt32()",
+                    PbWire.Fixed32 => $"{readerVar}.ReadSFixed32()",
+                    _ => $"{readerVar}.ReadInt32()",
+                },
+                SpecialType.System_Int64 => wire switch
+                {
+                    PbWire.ZigZag  => $"{readerVar}.ReadSInt64()",
+                    PbWire.Fixed64 => $"{readerVar}.ReadSFixed64()",
+                    _ => $"{readerVar}.ReadInt64()",
+                },
+                SpecialType.System_UInt32 => wire switch
+                {
+                    PbWire.Fixed32 => $"{readerVar}.ReadFixed32()",
+                    _ => $"{readerVar}.ReadUInt32()",
+                },
+                SpecialType.System_UInt64 => wire switch
+                {
+                    PbWire.Fixed64 => $"{readerVar}.ReadFixed64()",
+                    _ => $"{readerVar}.ReadUInt64()",
+                },
                 SpecialType.System_Single => $"{readerVar}.ReadFloat()",
                 SpecialType.System_Double => $"{readerVar}.ReadDouble()",
                 SpecialType.System_Boolean => $"{readerVar}.ReadBool()",
@@ -192,11 +230,13 @@ namespace PbLite.Generator
         private static bool IsPackedScalar(ITypeSymbol type)
         {
             ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
-            SpecialType st = underlying?.SpecialType ?? type.SpecialType;
+            ITypeSymbol effective = underlying ?? type;
+            SpecialType st = effective.SpecialType;
             return st is SpecialType.System_Int32 or SpecialType.System_Int64
                 or SpecialType.System_UInt32 or SpecialType.System_UInt64
                 or SpecialType.System_Single or SpecialType.System_Double
-                or SpecialType.System_Boolean;
+                or SpecialType.System_Boolean
+                || effective.TypeKind == TypeKind.Enum;
         }
     }
 }
