@@ -1,0 +1,202 @@
+using Microsoft.CodeAnalysis;
+using System.Text;
+
+namespace PbLite.Generator
+{
+    internal static class ReadEmitter
+    {
+        public static void Generate(StringBuilder sb, TypeInfo info)
+        {
+            sb.AppendLine("        public object Deserialize(ref ProtoReader reader, object? value)");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            var result = value as {info.Name} ?? new {info.Name}();");
+            foreach (var member in info.Members)
+            {
+                GenerateCollectionInit(sb, member);
+            }
+            sb.AppendLine("            while (!reader.End)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                reader.ReadTag(out int field, out WireType wireType);");
+            sb.AppendLine("                switch (field)");
+            sb.AppendLine("                {");
+            foreach (var member in info.Members)
+            {
+                GenerateReadField(sb, member);
+            }
+            sb.AppendLine("                    default:");
+            sb.AppendLine("                        reader.SkipField(wireType);");
+            sb.AppendLine("                        break;");
+            sb.AppendLine("                }");
+            sb.AppendLine("            }");
+            sb.AppendLine("            return result;");
+            sb.AppendLine("        }");
+        }
+
+        private static void GenerateCollectionInit(StringBuilder sb, MemberInfo member)
+        {
+            var kind = SymbolParser.GetCollectionInfo(member.Type, out _, out _, out _);
+            if (kind == CollectionKind.None) return;
+
+            string fullName = member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            sb.AppendLine($"            result.{member.Name} ??= new {fullName}();");
+        }
+
+        private static void GenerateReadField(StringBuilder sb, MemberInfo member)
+        {
+            int order = member.Order;
+            string accessor = $"result.{member.Name}";
+
+            var kind = SymbolParser.GetCollectionInfo(member.Type, out var elemType, out var keyType, out var valType);
+
+            if (kind == CollectionKind.List && elemType != null)
+            {
+                GenerateListRead(sb, order, accessor, elemType, member.Name);
+                return;
+            }
+
+            if (kind == CollectionKind.Map && keyType != null && valType != null)
+            {
+                GenerateMapRead(sb, order, accessor, keyType, valType, member.Name);
+                return;
+            }
+
+            GenerateReadValue(sb, member.Type, order, accessor, "reader", member.Name, "                    ");
+        }
+
+        private static void GenerateListRead(StringBuilder sb, int order, string accessor,
+            ITypeSymbol elemType, string memberName)
+        {
+            string? readExpr = GetReadExpression(elemType, "reader");
+            string? subReadExpr = GetReadExpression(elemType, "_sub_" + memberName);
+            string elemFullName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            bool isPacked = readExpr != null && subReadExpr != null &&
+                IsPackedScalar(elemType);
+
+            if (isPacked)
+            {
+                string subVar = $"_sub_{memberName}";
+                sb.AppendLine($"                    case {order}:");
+                sb.AppendLine("                        if (wireType == WireType.LengthDelimited)");
+                sb.AppendLine("                        {");
+                sb.AppendLine($"                            var {subVar} = new ProtoReader(reader.ReadBytes());");
+                sb.AppendLine($"                            while (!{subVar}.End)");
+                sb.AppendLine($"                                {accessor}.Add({subReadExpr});");
+                sb.AppendLine("                        }");
+                sb.AppendLine("                        else");
+                sb.AppendLine($"                            {accessor}.Add({readExpr});");
+                sb.AppendLine("                        break;");
+            }
+            else if (readExpr != null)
+            {
+                sb.AppendLine($"                    case {order}: {accessor}.Add({readExpr}); break;");
+            }
+            else if (elemType.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(elemType))
+            {
+                string nestedSerializer = elemType.Name + "Serializer";
+                string subVar = $"_sub_{memberName}";
+                sb.AppendLine($"                    case {order}:");
+                sb.AppendLine("                    {");
+                sb.AppendLine($"                        var {subVar} = new ProtoReader(reader.ReadBytes());");
+                sb.AppendLine($"                        {accessor}.Add(({elemFullName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, null));");
+                sb.AppendLine("                        break;");
+                sb.AppendLine("                    }");
+            }
+            else
+            {
+                sb.AppendLine($"                    // case {order}: unsupported list element type");
+            }
+        }
+
+        private static void GenerateMapRead(StringBuilder sb, int order, string accessor,
+            ITypeSymbol keyType, ITypeSymbol valType, string memberName)
+        {
+            string keyFullName = keyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string valFullName = valType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string subVar = $"_sub_{memberName}";
+            string? keyExpr = GetReadExpression(keyType, subVar);
+            string? valExpr = GetReadExpression(valType, subVar);
+
+            string keyVar = $"_key_{memberName}";
+            string valVar = $"_val_{memberName}";
+            string fieldVar = $"_f_{memberName}";
+            string wtVar = $"_wt_{memberName}";
+
+            sb.AppendLine($"                    case {order}:");
+            sb.AppendLine("                    {");
+            sb.AppendLine($"                        var {subVar} = new ProtoReader(reader.ReadBytes());");
+            sb.AppendLine($"                        {keyFullName} {keyVar} = default!;");
+            sb.AppendLine($"                        {valFullName} {valVar} = default!;");
+            sb.AppendLine($"                        while (!{subVar}.End)");
+            sb.AppendLine("                        {");
+            sb.AppendLine($"                            {subVar}.ReadTag(out int {fieldVar}, out WireType {wtVar});");
+            sb.AppendLine($"                            switch ({fieldVar})");
+            sb.AppendLine("                            {");
+            sb.AppendLine($"                                case 1: {keyVar} = {keyExpr}; break;");
+            sb.AppendLine($"                                case 2: {valVar} = {valExpr}; break;");
+            sb.AppendLine($"                                default: {subVar}.SkipField({wtVar}); break;");
+            sb.AppendLine("                            }");
+            sb.AppendLine("                        }");
+            sb.AppendLine($"                        {accessor}[{keyVar}] = {valVar};");
+            sb.AppendLine("                        break;");
+            sb.AppendLine("                    }");
+        }
+
+        private static void GenerateReadValue(StringBuilder sb, ITypeSymbol type, int order,
+            string accessor, string readerVar, string memberName, string indent)
+        {
+            string? readExpr = GetReadExpression(type, readerVar);
+            string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            if (readExpr != null)
+            {
+                sb.AppendLine($"{indent}case {order}: {accessor} = {readExpr}; break;");
+                return;
+            }
+
+            if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
+            {
+                string nestedSerializer = type.Name + "Serializer";
+                string subVar = $"_sub_{memberName}";
+                sb.AppendLine($"{indent}case {order}:");
+                sb.AppendLine($"{indent}{{");
+                sb.AppendLine($"{indent}    var {subVar} = new ProtoReader({readerVar}.ReadBytes());");
+                sb.AppendLine($"{indent}    {accessor} = ({typeName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, {accessor});");
+                sb.AppendLine($"{indent}    break;");
+                sb.AppendLine($"{indent}}}");
+                return;
+            }
+
+            sb.AppendLine($"{indent}// case {order}: unsupported type - skipped");
+        }
+
+        private static string? GetReadExpression(ITypeSymbol type, string readerVar)
+        {
+            ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
+            SpecialType st = underlying?.SpecialType ?? type.SpecialType;
+
+            return st switch
+            {
+                SpecialType.System_Int32 => $"{readerVar}.ReadInt32()",
+                SpecialType.System_Int64 => $"{readerVar}.ReadInt64()",
+                SpecialType.System_UInt32 => $"{readerVar}.ReadUInt32()",
+                SpecialType.System_UInt64 => $"{readerVar}.ReadUInt64()",
+                SpecialType.System_Single => $"{readerVar}.ReadFloat()",
+                SpecialType.System_Double => $"{readerVar}.ReadDouble()",
+                SpecialType.System_Boolean => $"{readerVar}.ReadBool()",
+                SpecialType.System_String => $"{readerVar}.ReadString()",
+                _ => null
+            };
+        }
+
+        private static bool IsPackedScalar(ITypeSymbol type)
+        {
+            ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
+            SpecialType st = underlying?.SpecialType ?? type.SpecialType;
+            return st is SpecialType.System_Int32 or SpecialType.System_Int64
+                or SpecialType.System_UInt32 or SpecialType.System_UInt64
+                or SpecialType.System_Single or SpecialType.System_Double
+                or SpecialType.System_Boolean;
+        }
+    }
+}
