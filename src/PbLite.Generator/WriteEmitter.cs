@@ -9,7 +9,7 @@ namespace PbLite.Generator
         {
             sb.AppendLine($"        public void Serialize<TWriter>(TWriter writer, object value) where TWriter : IBufferWriter<byte>");
             sb.AppendLine("        {");
-            sb.AppendLine($"            var v = ({info.Name})value;");
+            sb.AppendLine($"            var v = ({info.FullyQualifiedName})value;");
             foreach (var member in info.Members)
             {
                 GenerateWriteField(sb, member);
@@ -233,7 +233,7 @@ namespace PbLite.Generator
 
                     if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
                     {
-                        string nestedSerializer = type.Name + "Serializer";
+                        string nestedSerializer = SymbolParser.GetSerializerFullName(type);
                         string payloadVar = $"_payload_{fieldNumber}";
                         sb.AppendLine($"{indent}if ({accessor} != null)");
                         sb.AppendLine($"{indent}{{");
@@ -408,7 +408,7 @@ namespace PbLite.Generator
 
                     if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
                     {
-                        string nestedSerializer = type.Name + "Serializer";
+                        string nestedSerializer = SymbolParser.GetSerializerFullName(type);
                         string payloadVar = $"_sz_{fieldNumber}";
                         sb.AppendLine($"{indent}if ({accessor} != null)");
                         sb.AppendLine($"{indent}{{");
@@ -481,7 +481,7 @@ namespace PbLite.Generator
         {
             sb.AppendLine("        public int GetSize(object value)");
             sb.AppendLine("        {");
-            sb.AppendLine($"            var v = ({info.Name})value;");
+            sb.AppendLine($"            var v = ({info.FullyQualifiedName})value;");
             sb.AppendLine("            int size = 0;");
             foreach (var member in info.Members)
             {

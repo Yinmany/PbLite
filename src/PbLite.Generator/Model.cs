@@ -14,12 +14,19 @@ namespace PbLite.Generator
     {
         public string Name { get; }
         public string Namespace { get; }
+        public string FullyQualifiedName { get; }
+        public string SerializerName { get; }
+        public string SerializerFullName { get; }
         public List<MemberInfo> Members { get; }
 
-        public TypeInfo(string name, string ns, List<MemberInfo> members)
+        public TypeInfo(string name, string ns, string fullyQualifiedName,
+            string serializerName, string serializerFullName, List<MemberInfo> members)
         {
             Name = name;
             Namespace = ns;
+            FullyQualifiedName = fullyQualifiedName;
+            SerializerName = serializerName;
+            SerializerFullName = serializerFullName;
             Members = members;
         }
     }

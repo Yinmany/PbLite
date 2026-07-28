@@ -40,4 +40,29 @@ namespace PbLite.Tests
         [PbMember(16)] public Dictionary<int, string> IntStringMap { get; set; } = new();
         [PbMember(17)] public Dictionary<string, int> StringIntMap { get; set; } = new();
     }
+
+    /// <summary>
+    /// Container for testing nested [PbContract] classes.
+    /// </summary>
+    public class OuterContainer
+    {
+        [PbContract]
+        public class NestedMessage
+        {
+            [PbMember(1)] public int Id { get; set; }
+            [PbMember(2)] public string Name { get; set; } = "";
+            [PbMember(3)] public InnerMessage? Inner { get; set; }
+            [PbMember(4)] public List<int> Numbers { get; set; } = new();
+        }
+
+        public class MiddleLevel
+        {
+            [PbContract]
+            public class DeepNestedMessage
+            {
+                [PbMember(1)] public int Value { get; set; }
+                [PbMember(2)] public string Text { get; set; } = "";
+            }
+        }
+    }
 }

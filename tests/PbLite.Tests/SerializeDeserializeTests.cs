@@ -243,5 +243,58 @@ namespace PbLite.Tests
             Assert.Empty(result.IntStringMap);
             Assert.Empty(result.StringIntMap);
         }
+
+        [Fact]
+        public void NestedClass_Scalars_RoundTrip()
+        {
+            var msg = new OuterContainer.NestedMessage
+            {
+                Id = 42,
+                Name = "nested"
+            };
+
+            var (result, _) = RoundTrip(OuterContainer_NestedMessageSerializer.Instance, msg);
+
+            Assert.Equal(42, result.Id);
+            Assert.Equal("nested", result.Name);
+            Assert.Null(result.Inner);
+        }
+
+        [Fact]
+        public void NestedClass_WithInnerMessage_RoundTrip()
+        {
+            var msg = new OuterContainer.NestedMessage
+            {
+                Id = 1,
+                Name = "outer",
+                Inner = new InnerMessage { Id = 2, Name = "inner" },
+                Numbers = { 10, 20, 30 }
+            };
+
+            var (result, _) = RoundTrip(OuterContainer_NestedMessageSerializer.Instance, msg);
+
+            Assert.Equal(1, result.Id);
+            Assert.Equal("outer", result.Name);
+            Assert.NotNull(result.Inner);
+            Assert.Equal(2, result.Inner.Id);
+            Assert.Equal("inner", result.Inner.Name);
+            Assert.Equal(new[] { 10, 20, 30 }, result.Numbers);
+        }
+
+        [Fact]
+        public void DeepNestedClass_RoundTrip()
+        {
+            var msg = new OuterContainer.MiddleLevel.DeepNestedMessage
+            {
+                Value = 999,
+                Text = "deep"
+            };
+
+            var (result, _) = RoundTrip(
+                OuterContainer_MiddleLevel_DeepNestedMessageSerializer.Instance, msg);
+
+            Assert.Equal(999, result.Value);
+            Assert.Equal("deep", result.Text);
+        }
     }
 }

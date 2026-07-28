@@ -9,7 +9,7 @@ namespace PbLite.Generator
         {
             sb.AppendLine("        public object Deserialize(ref ProtoReader reader, object? value)");
             sb.AppendLine("        {");
-            sb.AppendLine($"            var result = value as {info.Name} ?? new {info.Name}();");
+            sb.AppendLine($"            var result = value as {info.FullyQualifiedName} ?? new {info.FullyQualifiedName}();");
             foreach (var member in info.Members)
             {
                 GenerateCollectionInit(sb, member);
@@ -100,7 +100,7 @@ namespace PbLite.Generator
             }
             else if (elemType.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(elemType))
             {
-                string nestedSerializer = elemType.Name + "Serializer";
+                string nestedSerializer = SymbolParser.GetSerializerFullName(elemType);
                 string subVar = $"_sub_{memberName}";
                 sb.AppendLine($"                    case {order}:");
                 sb.AppendLine("                    {");
@@ -165,7 +165,7 @@ namespace PbLite.Generator
 
             if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
             {
-                string nestedSerializer = type.Name + "Serializer";
+                string nestedSerializer = SymbolParser.GetSerializerFullName(type);
                 string subVar = $"_sub_{memberName}";
                 sb.AppendLine($"{indent}case {order}:");
                 sb.AppendLine($"{indent}{{");

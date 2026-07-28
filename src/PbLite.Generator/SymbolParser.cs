@@ -54,7 +54,12 @@ namespace PbLite.Generator
                 ? ""
                 : symbol.ContainingNamespace?.ToDisplayString() ?? "";
 
-            return new TypeInfo(symbol.Name, ns, members);
+            string fullyQualifiedName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string serializerName = GetSerializerName(symbol);
+            string serializerFullName = GetSerializerFullName(symbol);
+
+            return new TypeInfo(symbol.Name, ns, fullyQualifiedName,
+                serializerName, serializerFullName, members);
         }
 
         public static bool HasProtoContract(ITypeSymbol type)
@@ -112,6 +117,51 @@ namespace PbLite.Generator
             ITypeSymbol? underlying = GetNullableUnderlyingType(type);
             ITypeSymbol effective = underlying ?? type;
             return effective.TypeKind == TypeKind.Enum ? effective : null;
+        }
+
+        /// <summary>
+        /// Returns the containing type path (e.g. "Outer.Middle" for Outer.Middle.Inner),
+        /// or "" if the type is not nested.
+        /// </summary>
+        public static string GetContainingTypePath(ITypeSymbol type)
+        {
+            if (type.ContainingType == null) return "";
+            var parts = new List<string>();
+            var current = type.ContainingType;
+            while (current != null)
+            {
+                parts.Insert(0, current.Name);
+                current = current.ContainingType;
+            }
+            return string.Join(".", parts);
+        }
+
+        /// <summary>
+        /// Computes a unique serializer class name for the type.
+        /// Non-nested: "TypeNameSerializer"
+        /// Nested: "Outer_Inner_TypeNameSerializer"
+        /// </summary>
+        public static string GetSerializerName(ITypeSymbol type)
+        {
+            string path = GetContainingTypePath(type);
+            string baseName = string.IsNullOrEmpty(path)
+                ? type.Name
+                : path.Replace(".", "_") + "_" + type.Name;
+            return baseName + "Serializer";
+        }
+
+        /// <summary>
+        /// Computes the fully qualified serializer reference (e.g. "global::Ns.Outer_InnerSerializer").
+        /// </summary>
+        public static string GetSerializerFullName(ITypeSymbol type)
+        {
+            string name = GetSerializerName(type);
+            string ns = type.ContainingNamespace?.IsGlobalNamespace == true
+                ? ""
+                : type.ContainingNamespace?.ToDisplayString() ?? "";
+            return string.IsNullOrEmpty(ns)
+                ? $"global::{name}"
+                : $"global::{ns}.{name}";
         }
 
         private static bool IsProtoContract(INamedTypeSymbol? attrClass)

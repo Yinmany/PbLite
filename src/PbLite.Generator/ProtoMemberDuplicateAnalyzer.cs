@@ -12,6 +12,7 @@ namespace PbLite.Generator
     public class ProtoMemberDuplicateAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "N3PROTO001";
+        public const string PrivateNestedDiagnosticId = "N3PROTO002";
 
         private static readonly DiagnosticDescriptor Rule = new(
             DiagnosticId,
@@ -22,7 +23,16 @@ namespace PbLite.Generator
             isEnabledByDefault: true,
             description: "同一个 [ProtoContract] 类中 [ProtoMember] 的序号不能重复.");
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+        private static readonly DiagnosticDescriptor PrivateNestedRule = new(
+            PrivateNestedDiagnosticId,
+            "PbContract 不能用于私有嵌套类型",
+            "[PbContract] 不能用于私有嵌套类型 '{0}'，生成的序列化器无法访问该类型.",
+            "PbLite",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true,
+            description: "私有嵌套类型无法被生成的序列化器访问，请将类型改为非嵌套或提高可访问性.");
+
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule, PrivateNestedRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -38,6 +48,15 @@ namespace PbLite.Generator
             if (symbol == null) return;
             if (symbol.TypeKind != TypeKind.Class) return;
             if (!SymbolParser.HasProtoContract(symbol)) return;
+
+            // N3PROTO002: private nested types are inaccessible to the generated serializer
+            if (symbol.ContainingType != null && symbol.DeclaredAccessibility == Accessibility.Private)
+            {
+                var loc = symbol.Locations.FirstOrDefault();
+                if (loc != null)
+                    context.ReportDiagnostic(Diagnostic.Create(PrivateNestedRule, loc, symbol.Name));
+                return;
+            }
 
             var seen = new Dictionary<int, string>();
 
