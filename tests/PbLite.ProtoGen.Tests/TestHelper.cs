@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace PbLite.Gen.Tests;
+namespace PbLite.ProtoGen.Tests;
 
 static class TestHelper
 {

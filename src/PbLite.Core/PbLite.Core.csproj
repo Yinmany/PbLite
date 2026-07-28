@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+    <PackageId>PbLite.Core</PackageId>
+    <Description>PbLite runtime library</Description>
+  </PropertyGroup>
+
+</Project>

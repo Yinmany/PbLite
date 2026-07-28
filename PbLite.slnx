@@ -1,12 +1,13 @@
 <Solution>
     <Folder Name="/src/">
-        <Project Path="src/PbLite/PbLite.csproj" Id="843e639f-6f91-4f05-ba2f-2ad277cd5214" />
-        <Project Path="src/PbLite.Gen/PbLite.Gen.csproj" />
+        <Project Path="src/PbLite.Core/PbLite.Core.csproj" Id="843e639f-6f91-4f05-ba2f-2ad277cd5214" />
         <Project Path="src/PbLite.Generator/PbLite.Generator.csproj" />
+        <Project Path="src/PbLite.ProtoGen/PbLite.ProtoGen.csproj" />
+        <Project Path="src/PbLite/PbLite.csproj" Id="860c5292-2d59-43cd-8a6e-47e7ce4addd7" />
     </Folder>
     <Folder Name="/tests/">
         <Project Path="tests/PbLite.Bench/PbLite.Bench.csproj" />
-        <Project Path="tests/PbLite.Gen.Tests/PbLite.Gen.Tests.csproj" />
+        <Project Path="tests/PbLite.ProtoGen.Tests/PbLite.ProtoGen.Tests.csproj" />
         <Project Path="tests/PbLite.Tests/PbLite.Tests.csproj" Id="acd4dcd7-e823-4aa2-ae16-a3fe4b6b9de5" />
     </Folder>
 </Solution>

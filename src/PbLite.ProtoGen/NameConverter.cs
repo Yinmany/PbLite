@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace PbLite.Gen;
+namespace PbLite.ProtoGen;
 
 static class NameConverter
 {

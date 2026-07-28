@@ -1,4 +1,4 @@
-namespace PbLite.Gen;
+namespace PbLite.ProtoGen;
 
 static class TypeMapper
 {

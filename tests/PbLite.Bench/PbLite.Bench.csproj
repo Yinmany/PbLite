@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PbLite\PbLite.csproj" />
+    <ProjectReference Include="..\..\src\PbLite.Core\PbLite.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

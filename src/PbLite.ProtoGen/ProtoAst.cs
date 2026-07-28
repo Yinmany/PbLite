@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace PbLite.Gen;
+namespace PbLite.ProtoGen;
 
 enum FieldLabel { Singular, Repeated, Optional }
 

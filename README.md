@@ -163,7 +163,7 @@ src/
 └── PbLite.Gen/                # dotnet tool — 从 .proto 文件生成 C# class
 tests/
 ├── PbLite.Tests/              # 序列化器单元测试
-└── PbLite.Gen.Tests/          # 代码生成器单元测试
+└── PbLite.ProtoGen.Tests/          # 代码生成器单元测试
 ```
 
 工作流：

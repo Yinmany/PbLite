@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,14 +6,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <RootNamespace>PbLite.Gen</RootNamespace>
+    <RootNamespace>PbLite.ProtoGen</RootNamespace>
+    
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pblite-gen</ToolCommandName>
-    <PackageId>PbLite.Gen</PackageId>
+    <PackageId>PbLite.ProtoGen</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="PbLite.Gen.Tests" />
+    <InternalsVisibleTo Include="PbLite.ProtoGen.Tests" />
   </ItemGroup>
 
 </Project>

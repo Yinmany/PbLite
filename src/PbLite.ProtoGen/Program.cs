@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 
-namespace PbLite.Gen;
+namespace PbLite.ProtoGen;
 
 static class Program
 {
@@ -105,7 +105,7 @@ static class Program
 
     static void PrintHelp()
     {
-        Console.WriteLine("PbLite.Gen - proto3 to C# class generator");
+        Console.WriteLine("PbLite.ProtoGen - proto3 to C# class generator");
         Console.WriteLine();
         Console.WriteLine("Usage: pblite-gen <input> [options]");
         Console.WriteLine();

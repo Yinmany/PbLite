@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PbLite.Gen\PbLite.Gen.csproj" />
+    <ProjectReference Include="..\..\src\PbLite.ProtoGen\PbLite.ProtoGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

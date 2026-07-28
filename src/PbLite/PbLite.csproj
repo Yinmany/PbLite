@@ -1,8 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
+    <PackageId>PbLite</PackageId>
+
+     <!-- 不生成 dll -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PbLite.Core\PbLite.Core.csproj" />
+    <ProjectReference Include="..\PbLite.Generator\PbLite.Generator.csproj"/>
+  </ItemGroup>
 
 </Project>

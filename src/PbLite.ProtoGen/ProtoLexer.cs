@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PbLite.Gen;
+namespace PbLite.ProtoGen;
 
 enum TokenType { Identifier, Number, String, Symbol, EndOfFile }
 

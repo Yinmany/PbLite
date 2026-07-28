@@ -1,0 +1,29 @@
+<Project>
+  <PropertyGroup>
+
+    <!-- NuGet -->
+    <IsPackable>true</IsPackable>
+    <Authors>chuan</Authors>
+    <Description>面向 C# / Unity / .NET 高性能游戏场景的 Protobuf Wire Format 兼容序列化框架。零分配、AOT 友好，内含 Source Generator。</Description>
+    <PackageTags>protobuf;serialization;source-generator;aot;unity;game;zero-allocation</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/Yinmany/PbLite</PackageProjectUrl>
+    <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <!-- 所有项目默认版本来自 Git Tag -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="\" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)../LICENSE" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="MinVer" Version="7.0.0"  PrivateAssets="All" />
+  </ItemGroup>
+</Project>
