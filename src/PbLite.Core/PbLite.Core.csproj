@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <PackageId>PbLite.Core</PackageId>
     <Description>PbLite runtime library</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
 </Project>
