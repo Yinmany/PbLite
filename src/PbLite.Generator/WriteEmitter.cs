@@ -5,6 +5,8 @@ namespace PbLite.Generator
 {
     internal static class WriteEmitter
     {
+        // ─── Serialize generation ─────────────────────────────────
+
         public static void Generate(StringBuilder sb, TypeInfo info, bool isValueType = false)
         {
             string valueType = isValueType ? info.FullyQualifiedName : "object";
@@ -29,7 +31,7 @@ namespace PbLite.Generator
 
             if (kind == CollectionKind.List && elemType != null)
             {
-                bool isPacked = IsPackedType(elemType);
+                bool isPacked = SymbolParser.IsPackedScalar(elemType);
 
                 if (isPacked)
                 {
@@ -275,7 +277,6 @@ namespace PbLite.Generator
             ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
             ITypeSymbol effectiveType = underlying ?? type;
             SpecialType st = effectiveType.SpecialType;
-            string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             switch (st)
             {
@@ -449,6 +450,8 @@ namespace PbLite.Generator
             }
         }
 
+        // ─── Packed value generation ──────────────────────────────
+
         private static void GenerateGetSizePackedValue(StringBuilder sb, ITypeSymbol type,
             string accessor, string indent, string counterVar, PbWire wire)
         {
@@ -532,7 +535,7 @@ namespace PbLite.Generator
 
             if (kind == CollectionKind.List && elemType != null)
             {
-                bool isPacked = IsPackedType(elemType);
+                bool isPacked = SymbolParser.IsPackedScalar(elemType);
 
                 if (isPacked)
                 {
@@ -631,18 +634,6 @@ namespace PbLite.Generator
             PbWire.Fixed64 => $"ProtoWriter.WriteFixed64(writer, {fieldNumber}, (long){accessor})",
             _ => $"ProtoWriter.WriteUInt64(writer, {fieldNumber}, {accessor})",
         };
-
-        private static bool IsPackedType(ITypeSymbol type)
-        {
-            ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
-            ITypeSymbol effective = underlying ?? type;
-            SpecialType st = effective.SpecialType;
-            return st is SpecialType.System_Int32 or SpecialType.System_Int64
-                or SpecialType.System_UInt32 or SpecialType.System_UInt64
-                or SpecialType.System_Single or SpecialType.System_Double
-                or SpecialType.System_Boolean
-                || effective.TypeKind == TypeKind.Enum;
-        }
 
         private static void GenerateWritePackedValue(StringBuilder sb, ITypeSymbol type,
             string accessor, string indent, PbWire wire)

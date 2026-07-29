@@ -80,7 +80,7 @@ namespace PbLite.Generator
             string elemFullName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             bool isPacked = readExpr != null && subReadExpr != null &&
-                IsPackedScalar(elemType);
+                SymbolParser.IsPackedScalar(elemType);
 
             if (isPacked)
             {
@@ -208,13 +208,7 @@ namespace PbLite.Generator
             if (enumType != null)
             {
                 string enumFullName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                string readCall = wire switch
-                {
-                    PbWire.ZigZag  => $"{readerVar}.ReadSInt32()",
-                    PbWire.Fixed32 => $"{readerVar}.ReadSFixed32()",
-                    _ => $"{readerVar}.ReadInt32()",
-                };
-                return $"({enumFullName}){readCall}";
+                return $"({enumFullName}){ReadInt32Expr(readerVar, wire)}";
             }
 
             ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
@@ -222,18 +216,8 @@ namespace PbLite.Generator
 
             return st switch
             {
-                SpecialType.System_Int32 => wire switch
-                {
-                    PbWire.ZigZag  => $"{readerVar}.ReadSInt32()",
-                    PbWire.Fixed32 => $"{readerVar}.ReadSFixed32()",
-                    _ => $"{readerVar}.ReadInt32()",
-                },
-                SpecialType.System_Int64 => wire switch
-                {
-                    PbWire.ZigZag  => $"{readerVar}.ReadSInt64()",
-                    PbWire.Fixed64 => $"{readerVar}.ReadSFixed64()",
-                    _ => $"{readerVar}.ReadInt64()",
-                },
+                SpecialType.System_Int32 => ReadInt32Expr(readerVar, wire),
+                SpecialType.System_Int64 => ReadInt64Expr(readerVar, wire),
                 SpecialType.System_UInt32 => wire switch
                 {
                     PbWire.Fixed32 => $"{readerVar}.ReadFixed32()",
@@ -252,17 +236,19 @@ namespace PbLite.Generator
             };
         }
 
-        private static bool IsPackedScalar(ITypeSymbol type)
+        private static string ReadInt32Expr(string readerVar, PbWire wire) => wire switch
         {
-            ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
-            ITypeSymbol effective = underlying ?? type;
-            SpecialType st = effective.SpecialType;
-            return st is SpecialType.System_Int32 or SpecialType.System_Int64
-                or SpecialType.System_UInt32 or SpecialType.System_UInt64
-                or SpecialType.System_Single or SpecialType.System_Double
-                or SpecialType.System_Boolean
-                || effective.TypeKind == TypeKind.Enum;
-        }
+            PbWire.ZigZag  => $"{readerVar}.ReadSInt32()",
+            PbWire.Fixed32 => $"{readerVar}.ReadSFixed32()",
+            _ => $"{readerVar}.ReadInt32()",
+        };
+
+        private static string ReadInt64Expr(string readerVar, PbWire wire) => wire switch
+        {
+            PbWire.ZigZag  => $"{readerVar}.ReadSInt64()",
+            PbWire.Fixed64 => $"{readerVar}.ReadSFixed64()",
+            _ => $"{readerVar}.ReadInt64()",
+        };
 
         private static int GetPackedElementSize(ITypeSymbol type, PbWire wire)
         {

@@ -93,15 +93,8 @@ namespace PbLite.Generator
 
         private static int? GetProtoMemberOrder(ImmutableArray<AttributeData> attrs)
         {
-            foreach (var attr in attrs)
-            {
-                if (attr.AttributeClass?.Name is "PbMemberAttribute" or "PbMember")
-                {
-                    if (attr.ConstructorArguments.Length > 0)
-                        return (int)attr.ConstructorArguments[0].Value!;
-                }
-            }
-            return null;
+            var attr = SymbolParser.GetProtoMemberAttribute(attrs);
+            return attr != null ? (int)attr.ConstructorArguments[0].Value! : null;
         }
     }
 }

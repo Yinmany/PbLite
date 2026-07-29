@@ -32,19 +32,14 @@ namespace PbLite.Generator
                 if (member is IPropertySymbol { IsStatic: false } prop)
                 {
                     var attr = GetProtoMemberAttribute(prop.GetAttributes());
-                    if (attr == null) continue;
-
-                    int order = (int)attr.ConstructorArguments[0].Value!;
-                    bool isReadOnly = prop.SetMethod == null || prop.IsReadOnly;
-                    members.Add(new MemberInfo(prop.Name, prop.Type, order, isReadOnly, GetWire(attr)));
+                    if (attr != null)
+                        members.Add(new MemberInfo(prop.Name, prop.Type, (int)attr.ConstructorArguments[0].Value!, GetWire(attr)));
                 }
                 else if (member is IFieldSymbol { IsStatic: false } field)
                 {
                     var attr = GetProtoMemberAttribute(field.GetAttributes());
-                    if (attr == null) continue;
-
-                    int order = (int)attr.ConstructorArguments[0].Value!;
-                    members.Add(new MemberInfo(field.Name, field.Type, order, field.IsReadOnly, GetWire(attr)));
+                    if (attr != null)
+                        members.Add(new MemberInfo(field.Name, field.Type, (int)attr.ConstructorArguments[0].Value!, GetWire(attr)));
                 }
             }
 
@@ -58,7 +53,7 @@ namespace PbLite.Generator
             string serializerName = GetSerializerName(symbol);
             string serializerFullName = GetSerializerFullName(symbol);
 
-            return new TypeInfo(symbol.Name, ns, fullyQualifiedName,
+            return new TypeInfo(ns, fullyQualifiedName,
                 serializerName, serializerFullName, members, isValueType: symbol.IsValueType);
         }
 
@@ -106,6 +101,22 @@ namespace PbLite.Generator
         public static bool IsByteArray(ITypeSymbol type)
         {
             return type is IArrayTypeSymbol { ElementType.SpecialType: SpecialType.System_Byte };
+        }
+
+        /// <summary>
+        /// Returns true if the type is a scalar that can be packed (int, long, uint, ulong,
+        /// float, double, bool, or enum — including Nullable&lt;T&gt; variants).
+        /// </summary>
+        public static bool IsPackedScalar(ITypeSymbol type)
+        {
+            ITypeSymbol? underlying = GetNullableUnderlyingType(type);
+            ITypeSymbol effective = underlying ?? type;
+            SpecialType st = effective.SpecialType;
+            return st is SpecialType.System_Int32 or SpecialType.System_Int64
+                or SpecialType.System_UInt32 or SpecialType.System_UInt64
+                or SpecialType.System_Single or SpecialType.System_Double
+                or SpecialType.System_Boolean
+                || effective.TypeKind == TypeKind.Enum;
         }
 
         /// <summary>
@@ -170,7 +181,7 @@ namespace PbLite.Generator
             return attrClass.Name is ProtoContractName or ProtoContractShort;
         }
 
-        private static AttributeData? GetProtoMemberAttribute(ImmutableArray<AttributeData> attrs)
+        internal static AttributeData? GetProtoMemberAttribute(ImmutableArray<AttributeData> attrs)
         {
             foreach (var attr in attrs)
             {
