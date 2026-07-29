@@ -1,6 +1,5 @@
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-
 namespace PbLite.Generator
 {
     internal enum CollectionKind { None, List, Map }
@@ -46,22 +45,6 @@ namespace PbLite.Generator
             Order = order;
             IsReadOnly = isReadOnly;
             Wire = wire;
-        }
-    }
-
-    internal sealed class RegistryInfo
-    {
-        public string Name { get; }
-        public string Namespace { get; }
-        public bool IsStatic { get; }
-        public Location Location { get; }
-
-        public RegistryInfo(string name, string ns, bool isStatic, Location location)
-        {
-            Name = name;
-            Namespace = ns;
-            IsStatic = isStatic;
-            Location = location;
         }
     }
 }

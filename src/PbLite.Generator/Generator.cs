@@ -18,17 +18,9 @@ namespace PbLite.Generator
             context.RegisterSourceOutput(typeDeclarations, SerializerEmitter.Generate);
 
             var allTypes = typeDeclarations.Collect();
-
-            var registryTargets = context.SyntaxProvider
-                .CreateSyntaxProvider(
-                    predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0,
-                    transform: static (ctx, _) => SymbolParser.GetRegistryInfo(ctx))
-                .Where(static info => info != null)!
-                .Collect();
-
-            context.RegisterSourceOutput(
-                allTypes.Combine(registryTargets),
-                static (ctx, pair) => SerializerEmitter.GenerateRegistry(ctx, pair.Left, pair.Right));
+            var registryInput = allTypes.Combine(context.CompilationProvider);
+            context.RegisterSourceOutput(registryInput, (ctx, pair) =>
+                SerializerEmitter.GenerateRegistry(ctx, pair.Left, pair.Right));
         }
     }
 }

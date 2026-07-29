@@ -65,39 +65,28 @@ pblite-gen messages.proto -o ./Generated
 
 ## 2. Initialize Registry
 
-PbLite 生成 `ProtoGenerated` 静态类遍历所有 Serializer。按需创建 Registry：
+Source Generator 会生成 `PbLiteGeneratedSerializers` partial 类，调用 `Register()` 即可将所有 Serializer 注册到 `SerializerRegistry`：
 
 ```csharp
-public sealed class ProtoRegistry
-{
-    private readonly Dictionary<Type, IProtoSerializer> _serializers = new();
-
-    public void Register(IProtoSerializer serializer)
-        => _serializers.Add(serializer.Type, serializer);
-
-    public IProtoSerializer Get(Type type)
-        => _serializers[type];
-}
+// 注册当前程序集所有生成的 Serializer
+PbLiteGeneratedSerializers.Register();
 ```
 
-初始化：
+注册后通过 `SerializerRegistry.Get(Type)` 获取 Serializer：
 
 ```csharp
-var registry = new ProtoRegistry();
-ProtoGenerated.ForEach(registry.Register);
+var serializer = SerializerRegistry.Get(typeof(ChatMessage));
 ```
 
 游戏服务端通常用 MessageId 而非 Type 定位消息：
 
 ```csharp
-messageRegistry.Register(1001, ChatMessageSerializer.Instance);
-
-// 通过 MsgIdMap 自动关联
-ProtoGenerated.ForEach(serializer =>
+// 遍历已注册的 Serializer，按 MsgId 建立映射
+foreach (var (type, serializer) in SerializerRegistry.All)
 {
-    var msgId = MsgIdMap.Get(serializer.Type);
+    var msgId = MsgIdMap.Get(type);
     messageRegistry.Add(msgId, serializer);
-});
+}
 ```
 
 ## 3. Serialize
@@ -110,7 +99,7 @@ var message = new ChatMessage
 };
 
 var writer = new ArrayBufferWriter<byte>();
-var serializer = registry.Get(typeof(ChatMessage));
+var serializer = SerializerRegistry.Get(typeof(ChatMessage));
 serializer.Serialize(writer, message);
 // writer.WrittenSpan 即为序列化结果
 ```
@@ -119,7 +108,7 @@ serializer.Serialize(writer, message);
 
 ```csharp
 var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan));
-var serializer = registry.Get(typeof(ChatMessage));
+var serializer = SerializerRegistry.Get(typeof(ChatMessage));
 var message = (ChatMessage)serializer.Deserialize(ref reader, null);
 ```
 
