@@ -38,15 +38,15 @@ namespace PbLite.Generator
         {
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
-            context.RegisterSyntaxNodeAction(AnalyzeClassDeclaration, SyntaxKind.ClassDeclaration);
+            context.RegisterSyntaxNodeAction(AnalyzeTypeDeclaration, SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration);
         }
 
-        private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context)
+        private static void AnalyzeTypeDeclaration(SyntaxNodeAnalysisContext context)
         {
-            var classDecl = (ClassDeclarationSyntax)context.Node;
-            var symbol = context.SemanticModel.GetDeclaredSymbol(classDecl) as INamedTypeSymbol;
+            var typeDecl = (TypeDeclarationSyntax)context.Node;
+            var symbol = context.SemanticModel.GetDeclaredSymbol(typeDecl) as INamedTypeSymbol;
             if (symbol == null) return;
-            if (symbol.TypeKind != TypeKind.Class) return;
+            if (symbol.TypeKind != TypeKind.Class && symbol.TypeKind != TypeKind.Structure) return;
             if (!SymbolParser.HasProtoContract(symbol)) return;
 
             // N3PROTO002: private nested types are inaccessible to the generated serializer

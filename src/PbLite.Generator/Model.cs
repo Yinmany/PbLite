@@ -17,9 +17,10 @@ namespace PbLite.Generator
         public string SerializerName { get; }
         public string SerializerFullName { get; }
         public List<MemberInfo> Members { get; }
+        public bool IsValueType { get; }
 
         public TypeInfo(string name, string ns, string fullyQualifiedName,
-            string serializerName, string serializerFullName, List<MemberInfo> members)
+            string serializerName, string serializerFullName, List<MemberInfo> members, bool isValueType = false)
         {
             Name = name;
             Namespace = ns;
@@ -27,6 +28,7 @@ namespace PbLite.Generator
             SerializerName = serializerName;
             SerializerFullName = serializerFullName;
             Members = members;
+            IsValueType = isValueType;
         }
     }
 

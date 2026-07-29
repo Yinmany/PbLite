@@ -5,11 +5,20 @@ namespace PbLite.Generator
 {
     internal static class ReadEmitter
     {
-        public static void Generate(StringBuilder sb, TypeInfo info)
+        public static void Generate(StringBuilder sb, TypeInfo info, bool isValueType = false)
         {
-            sb.AppendLine("        public object Deserialize(ref ProtoReader reader, object? value)");
-            sb.AppendLine("        {");
-            sb.AppendLine($"            var result = value as {info.FullyQualifiedName} ?? new {info.FullyQualifiedName}();");
+            if (isValueType)
+            {
+                sb.AppendLine($"        public {info.FullyQualifiedName} Deserialize(ref ProtoReader reader, {info.FullyQualifiedName}? value)");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            var result = value ?? default;");
+            }
+            else
+            {
+                sb.AppendLine("        public object Deserialize(ref ProtoReader reader, object? value)");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            var result = value as {info.FullyQualifiedName} ?? new {info.FullyQualifiedName}();");
+            }
             foreach (var member in info.Members)
             {
                 GenerateCollectionInit(sb, member);
@@ -98,7 +107,7 @@ namespace PbLite.Generator
             {
                 sb.AppendLine($"                    case {order}: {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64)); {accessor}.Add({readExpr}); break;");
             }
-            else if (elemType.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(elemType))
+            else if ((elemType.TypeKind == TypeKind.Class || elemType.TypeKind == TypeKind.Structure) && SymbolParser.HasProtoContract(elemType))
             {
                 string nestedSerializer = SymbolParser.GetSerializerFullName(elemType);
                 string subVar = $"_sub_{memberName}";
@@ -163,14 +172,21 @@ namespace PbLite.Generator
                 return;
             }
 
-            if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
+            ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
+            ITypeSymbol effectiveType = underlying ?? type;
+
+            if ((effectiveType.TypeKind == TypeKind.Class || effectiveType.TypeKind == TypeKind.Structure) && SymbolParser.HasProtoContract(effectiveType))
             {
-                string nestedSerializer = SymbolParser.GetSerializerFullName(type);
+                string nestedSerializer = SymbolParser.GetSerializerFullName(effectiveType);
                 string subVar = $"_sub_{memberName}";
+                string elemTypeName = effectiveType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 sb.AppendLine($"{indent}case {order}:");
                 sb.AppendLine($"{indent}{{");
                 sb.AppendLine($"{indent}    var {subVar} = new ProtoReader({readerVar}.ReadBytes());");
-                sb.AppendLine($"{indent}    {accessor} = ({typeName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, {accessor});");
+                if (underlying != null)
+                    sb.AppendLine($"{indent}    {accessor} = ({elemTypeName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, null);");
+                else
+                    sb.AppendLine($"{indent}    {accessor} = ({typeName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, {accessor});");
                 sb.AppendLine($"{indent}    break;");
                 sb.AppendLine($"{indent}}}");
                 return;

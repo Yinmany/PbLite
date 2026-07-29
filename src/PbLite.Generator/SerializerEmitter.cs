@@ -36,11 +36,40 @@ namespace PbLite.Generator
             sb.AppendLine($"        public Type Type => typeof({info.FullyQualifiedName});");
             sb.AppendLine();
 
-            WriteEmitter.Generate(sb, info);
-            sb.AppendLine();
-            WriteEmitter.GenerateGetSize(sb, info);
-            sb.AppendLine();
-            ReadEmitter.Generate(sb, info);
+            if (info.IsValueType)
+            {
+                // Generate typed methods (no boxing)
+                WriteEmitter.Generate(sb, info, isValueType: true);
+                sb.AppendLine();
+                WriteEmitter.GenerateGetSize(sb, info, isValueType: true);
+                sb.AppendLine();
+                ReadEmitter.Generate(sb, info, isValueType: true);
+                sb.AppendLine();
+
+                // Explicit IProtoSerializer interface implementation (delegates to typed methods)
+                sb.AppendLine("        void IProtoSerializer.Serialize<TWriter>(TWriter writer, object value)");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            Serialize(writer, ({info.FullyQualifiedName})value);");
+                sb.AppendLine("        }");
+                sb.AppendLine();
+                sb.AppendLine("        int IProtoSerializer.GetSize(object value)");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            return GetSize(({info.FullyQualifiedName})value);");
+                sb.AppendLine("        }");
+                sb.AppendLine();
+                sb.AppendLine("        object IProtoSerializer.Deserialize(ref ProtoReader reader, object? value)");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            return Deserialize(ref reader, ({info.FullyQualifiedName}?)value);");
+                sb.AppendLine("        }");
+            }
+            else
+            {
+                WriteEmitter.Generate(sb, info);
+                sb.AppendLine();
+                WriteEmitter.GenerateGetSize(sb, info);
+                sb.AppendLine();
+                ReadEmitter.Generate(sb, info);
+            }
 
             sb.AppendLine("    }");
 

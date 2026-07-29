@@ -15,8 +15,8 @@ namespace PbLite.Generator
 
         public static TypeInfo? GetTypeInfo(GeneratorSyntaxContext ctx)
         {
-            var classDecl = (ClassDeclarationSyntax)ctx.Node;
-            var symbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl) as INamedTypeSymbol;
+            var typeDecl = (TypeDeclarationSyntax)ctx.Node;
+            var symbol = ctx.SemanticModel.GetDeclaredSymbol(typeDecl) as INamedTypeSymbol;
             if (symbol == null) return null;
 
             var protoContract = symbol.GetAttributes()
@@ -59,7 +59,7 @@ namespace PbLite.Generator
             string serializerFullName = GetSerializerFullName(symbol);
 
             return new TypeInfo(symbol.Name, ns, fullyQualifiedName,
-                serializerName, serializerFullName, members);
+                serializerName, serializerFullName, members, isValueType: symbol.IsValueType);
         }
 
         public static bool HasProtoContract(ITypeSymbol type)

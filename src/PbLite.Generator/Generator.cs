@@ -11,7 +11,7 @@ namespace PbLite.Generator
         {
             var typeDeclarations = context.SyntaxProvider
                 .CreateSyntaxProvider(
-                    predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0,
+                    predicate: static (node, _) => node is TypeDeclarationSyntax t && t.AttributeLists.Count > 0,
                     transform: static (ctx, ct) => SymbolParser.GetTypeInfo(ctx))
                 .Where(static info => info != null)!;
 

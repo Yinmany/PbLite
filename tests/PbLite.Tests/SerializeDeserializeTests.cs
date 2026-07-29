@@ -245,6 +245,80 @@ namespace PbLite.Tests
         }
 
         [Fact]
+        public void SimpleStruct_RoundTrip()
+        {
+            var msg = new SimpleStruct { Id = 42, Name = "hello" };
+
+            var writer = new ArrayBufferWriter<byte>();
+            SimpleStructSerializer.Instance.Serialize(writer, msg);
+            var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
+            var result = SimpleStructSerializer.Instance.Deserialize(ref reader, null);
+
+            Assert.Equal(42, result.Id);
+            Assert.Equal("hello", result.Name);
+        }
+
+        [Fact]
+        public void SimpleStruct_ScalarDefaults_RoundTrip()
+        {
+            var msg = new SimpleStruct();
+
+            var writer = new ArrayBufferWriter<byte>();
+            SimpleStructSerializer.Instance.Serialize(writer, msg);
+            var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
+            var result = SimpleStructSerializer.Instance.Deserialize(ref reader, null);
+
+            Assert.Equal(0, result.Id);
+            Assert.Null(result.Name);
+        }
+
+        [Fact]
+        public void StructWithScalars_RoundTrip()
+        {
+            var msg = new StructWithScalars
+            {
+                IntField = -123,
+                LongField = 9876543210L,
+                FloatField = 3.14f,
+                BoolField = true,
+                StringField = "test",
+                NullableInt = 99
+            };
+
+            var writer = new ArrayBufferWriter<byte>();
+            StructWithScalarsSerializer.Instance.Serialize(writer, msg);
+            var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
+            var result = StructWithScalarsSerializer.Instance.Deserialize(ref reader, null);
+
+            Assert.Equal(-123, result.IntField);
+            Assert.Equal(9876543210L, result.LongField);
+            Assert.Equal(3.14f, result.FloatField);
+            Assert.True(result.BoolField);
+            Assert.Equal("test", result.StringField);
+            Assert.Equal(99, result.NullableInt);
+        }
+
+        [Fact]
+        public void StructWithNested_RoundTrip()
+        {
+            var msg = new StructWithNested
+            {
+                Value = 999,
+                Nested = new SimpleStruct { Id = 1, Name = "nested" }
+            };
+
+            var writer = new ArrayBufferWriter<byte>();
+            StructWithNestedSerializer.Instance.Serialize(writer, msg);
+            var reader = new ProtoReader(new ReadOnlySequence<byte>(writer.WrittenSpan.ToArray()));
+            var result = StructWithNestedSerializer.Instance.Deserialize(ref reader, null);
+
+            Assert.Equal(999, result.Value);
+            Assert.NotNull(result.Nested);
+            Assert.Equal(1, result.Nested.Value.Id);
+            Assert.Equal("nested", result.Nested.Value.Name);
+        }
+
+        [Fact]
         public void NestedClass_Scalars_RoundTrip()
         {
             var msg = new OuterContainer.NestedMessage

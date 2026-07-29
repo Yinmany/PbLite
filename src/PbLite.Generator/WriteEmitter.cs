@@ -5,11 +5,14 @@ namespace PbLite.Generator
 {
     internal static class WriteEmitter
     {
-        public static void Generate(StringBuilder sb, TypeInfo info)
+        public static void Generate(StringBuilder sb, TypeInfo info, bool isValueType = false)
         {
-            sb.AppendLine($"        public void Serialize<TWriter>(TWriter writer, object value) where TWriter : IBufferWriter<byte>");
+            string valueType = isValueType ? info.FullyQualifiedName : "object";
+            sb.AppendLine($"        public void Serialize<TWriter>(TWriter writer, {valueType} value) where TWriter : IBufferWriter<byte>");
             sb.AppendLine("        {");
-            sb.AppendLine($"            var v = ({info.FullyQualifiedName})value;");
+            sb.AppendLine(isValueType
+                ? $"            var v = value;"
+                : $"            var v = ({info.FullyQualifiedName})value;");
             foreach (var member in info.Members)
             {
                 GenerateWriteField(sb, member);
@@ -82,7 +85,8 @@ namespace PbLite.Generator
             string accessor, string indent, PbWire wire = PbWire.Varint, bool skipDefault = true)
         {
             ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
-            SpecialType st = underlying?.SpecialType ?? type.SpecialType;
+            ITypeSymbol effectiveType = underlying ?? type;
+            SpecialType st = effectiveType.SpecialType;
             string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             switch (st)
@@ -231,17 +235,29 @@ namespace PbLite.Generator
                         break;
                     }
 
-                    if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
+                    if (SymbolParser.HasProtoContract(effectiveType) && (effectiveType.TypeKind == TypeKind.Class || effectiveType.TypeKind == TypeKind.Structure))
                     {
-                        string nestedSerializer = SymbolParser.GetSerializerFullName(type);
+                        string nestedSerializer = SymbolParser.GetSerializerFullName(effectiveType);
                         string payloadVar = $"_payload_{fieldNumber}";
-                        sb.AppendLine($"{indent}if ({accessor} != null)");
-                        sb.AppendLine($"{indent}{{");
-                        sb.AppendLine($"{indent}    int {payloadVar} = {nestedSerializer}.Instance.GetSize({accessor});");
+                        string valueAccess = underlying != null ? $"{accessor}.Value" : accessor;
+                        if (effectiveType.TypeKind == TypeKind.Class)
+                        {
+                            sb.AppendLine($"{indent}if ({accessor} != null)");
+                            sb.AppendLine($"{indent}{{");
+                        }
+                        else if (underlying != null)
+                        {
+                            sb.AppendLine($"{indent}if ({accessor}.HasValue)");
+                            sb.AppendLine($"{indent}{{");
+                        }
+                        sb.AppendLine($"{indent}    int {payloadVar} = {nestedSerializer}.Instance.GetSize({valueAccess});");
                         sb.AppendLine($"{indent}    ProtoWriter.WriteTag(writer, {fieldNumber}, WireType.LengthDelimited);");
                         sb.AppendLine($"{indent}    ProtoWriter.WriteVarInt32(writer, (uint){payloadVar});");
-                        sb.AppendLine($"{indent}    {nestedSerializer}.Instance.Serialize(writer, {accessor});");
-                        sb.AppendLine($"{indent}}}");
+                        sb.AppendLine($"{indent}    {nestedSerializer}.Instance.Serialize(writer, {valueAccess});");
+                        if (effectiveType.TypeKind == TypeKind.Class || underlying != null)
+                        {
+                            sb.AppendLine($"{indent}}}");
+                        }
                     }
                     else
                     {
@@ -257,7 +273,8 @@ namespace PbLite.Generator
             string accessor, string indent, string counterVar, PbWire wire = PbWire.Varint, bool skipDefault = true)
         {
             ITypeSymbol? underlying = SymbolParser.GetNullableUnderlyingType(type);
-            SpecialType st = underlying?.SpecialType ?? type.SpecialType;
+            ITypeSymbol effectiveType = underlying ?? type;
+            SpecialType st = effectiveType.SpecialType;
             string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             switch (st)
@@ -406,15 +423,27 @@ namespace PbLite.Generator
                         break;
                     }
 
-                    if (type.TypeKind == TypeKind.Class && SymbolParser.HasProtoContract(type))
+                    if (SymbolParser.HasProtoContract(effectiveType) && (effectiveType.TypeKind == TypeKind.Class || effectiveType.TypeKind == TypeKind.Structure))
                     {
-                        string nestedSerializer = SymbolParser.GetSerializerFullName(type);
+                        string nestedSerializer = SymbolParser.GetSerializerFullName(effectiveType);
                         string payloadVar = $"_sz_{fieldNumber}";
-                        sb.AppendLine($"{indent}if ({accessor} != null)");
-                        sb.AppendLine($"{indent}{{");
-                        sb.AppendLine($"{indent}    int {payloadVar} = {nestedSerializer}.Instance.GetSize({accessor});");
+                        string valueAccess = underlying != null ? $"{accessor}.Value" : accessor;
+                        if (effectiveType.TypeKind == TypeKind.Class)
+                        {
+                            sb.AppendLine($"{indent}if ({accessor} != null)");
+                            sb.AppendLine($"{indent}{{");
+                        }
+                        else if (underlying != null)
+                        {
+                            sb.AppendLine($"{indent}if ({accessor}.HasValue)");
+                            sb.AppendLine($"{indent}{{");
+                        }
+                        sb.AppendLine($"{indent}    int {payloadVar} = {nestedSerializer}.Instance.GetSize({valueAccess});");
                         sb.AppendLine($"{indent}    {counterVar} += ProtoWriter.GetTagSize({fieldNumber}, WireType.LengthDelimited) + ProtoWriter.GetVarInt32Size((uint){payloadVar}) + {payloadVar};");
-                        sb.AppendLine($"{indent}}}");
+                        if (effectiveType.TypeKind == TypeKind.Class || underlying != null)
+                        {
+                            sb.AppendLine($"{indent}}}");
+                        }
                     }
                     break;
             }
@@ -477,11 +506,14 @@ namespace PbLite.Generator
             }
         }
 
-        public static void GenerateGetSize(StringBuilder sb, TypeInfo info)
+        public static void GenerateGetSize(StringBuilder sb, TypeInfo info, bool isValueType = false)
         {
-            sb.AppendLine("        public int GetSize(object value)");
+            string valueType = isValueType ? info.FullyQualifiedName : "object";
+            sb.AppendLine($"        public int GetSize({valueType} value)");
             sb.AppendLine("        {");
-            sb.AppendLine($"            var v = ({info.FullyQualifiedName})value;");
+            sb.AppendLine(isValueType
+                ? $"            var v = value;"
+                : $"            var v = ({info.FullyQualifiedName})value;");
             sb.AppendLine("            int size = 0;");
             foreach (var member in info.Members)
             {

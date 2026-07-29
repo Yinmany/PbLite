@@ -41,6 +41,31 @@ namespace PbLite.Tests
         [PbMember(17)] public Dictionary<string, int> StringIntMap { get; set; } = new();
     }
 
+    [PbContract]
+    public struct SimpleStruct
+    {
+        [PbMember(1)] public int Id { get; set; }
+        [PbMember(2)] public string Name { get; set; }
+    }
+
+    [PbContract]
+    public struct StructWithNested
+    {
+        [PbMember(1)] public int Value { get; set; }
+        [PbMember(2)] public SimpleStruct? Nested { get; set; }
+    }
+
+    [PbContract]
+    public struct StructWithScalars
+    {
+        [PbMember(1)] public int IntField { get; set; }
+        [PbMember(2)] public long LongField { get; set; }
+        [PbMember(3)] public float FloatField { get; set; }
+        [PbMember(4)] public bool BoolField { get; set; }
+        [PbMember(5)] public string? StringField { get; set; }
+        [PbMember(6)] public int? NullableInt { get; set; }
+    }
+
     /// <summary>
     /// Container for testing nested [PbContract] classes.
     /// </summary>
