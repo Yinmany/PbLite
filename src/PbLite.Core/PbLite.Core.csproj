@@ -6,6 +6,7 @@
     <PackageId>PbLite.Core</PackageId>
     <Description>PbLite runtime library</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
 </Project>

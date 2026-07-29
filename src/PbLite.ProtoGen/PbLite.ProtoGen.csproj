@@ -7,18 +7,21 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <RootNamespace>PbLite.ProtoGen</RootNamespace>
-    
+
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pblite-gen</ToolCommandName>
     <PackageId>PbLite.ProtoGen</PackageId>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishAot)' == 'false'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PublishAot)' == 'true'">
 
     <!--<PublishAot>true</PublishAot>
     <SelfContained>true</SelfContained>-->
-    
+
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
 
@@ -28,10 +31,10 @@
 
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    
+
     <StackTraceSupport>false</StackTraceSupport>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <InternalsVisibleTo Include="PbLite.ProtoGen.Tests" />
   </ItemGroup>

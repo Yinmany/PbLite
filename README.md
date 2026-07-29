@@ -55,7 +55,7 @@ public partial class ChatMessage
 
 ```bash
 # 安装工具
-dotnet tool install -g PbLite.Gen
+dotnet tool install -g PbLite.ProtoGen
 
 # 从 proto 生成 C# class
 pblite-gen messages.proto -o ./Generated
