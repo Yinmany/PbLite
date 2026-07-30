@@ -43,8 +43,6 @@ namespace PbLite.Generator
                 }
             }
 
-            if (members.Count == 0) return null;
-
             string ns = symbol.ContainingNamespace?.IsGlobalNamespace == true
                 ? ""
                 : symbol.ContainingNamespace?.ToDisplayString() ?? "";

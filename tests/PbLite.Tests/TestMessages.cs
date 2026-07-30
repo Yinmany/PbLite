@@ -4,6 +4,9 @@ using PbLite;
 namespace PbLite.Tests
 {
     [PbContract]
+    public class EmptyMessage { }
+
+    [PbContract]
     public class InnerMessage
     {
         [PbMember(1)] public int Id { get; set; }
