@@ -11,6 +11,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pblite-gen</ToolCommandName>
     <PackageId>PbLite.ProtoGen</PackageId>
+    <Description>PbLite .proto to cs</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PublishAot)' == 'false'">

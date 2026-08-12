@@ -1,4 +1,7 @@
 <Solution>
+    <Folder Name="/smaples/">
+        <Project Path="smaples/DotNet/PbLite.Samples.DotNet.csproj" />
+    </Folder>
     <Folder Name="/src/">
         <Project Path="src/PbLite.Core/PbLite.Core.csproj" Id="843e639f-6f91-4f05-ba2f-2ad277cd5214" />
         <Project Path="src/PbLite.Generator/PbLite.Generator.csproj" />
