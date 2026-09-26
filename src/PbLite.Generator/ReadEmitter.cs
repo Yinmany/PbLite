@@ -89,12 +89,14 @@ namespace PbLite.Generator
                 string capExpr = minElemSize > 1
                     ? $"(int)({bytesVar}.Length / {minElemSize})"
                     : $"(int){bytesVar}.Length";
+                string capVar = $"_cap_{memberName}";
                 string subVar = $"_sub_{memberName}";
                 sb.AppendLine($"                    case {order}:");
                 sb.AppendLine("                        if (wireType == WireType.LengthDelimited)");
                 sb.AppendLine("                        {");
                 sb.AppendLine($"                            var {bytesVar} = reader.ReadBytes();");
-                sb.AppendLine($"                            {accessor}.EnsureCapacity({capExpr});");
+                sb.AppendLine($"                            var {capVar} = {capExpr};");
+                sb.AppendLine($"                            if ({capVar} > {accessor}.Capacity) {accessor}.Capacity = {capVar};");
                 sb.AppendLine($"                            var {subVar} = new ProtoReader({bytesVar});");
                 sb.AppendLine($"                            while (!{subVar}.End)");
                 sb.AppendLine($"                                {accessor}.Add({subReadExpr});");
@@ -105,7 +107,7 @@ namespace PbLite.Generator
             }
             else if (readExpr != null)
             {
-                sb.AppendLine($"                    case {order}: {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64)); {accessor}.Add({readExpr}); break;");
+                sb.AppendLine($"                    case {order}: {accessor}.Add({readExpr}); break;");
             }
             else if ((elemType.TypeKind == TypeKind.Class || elemType.TypeKind == TypeKind.Structure) && SymbolParser.HasProtoContract(elemType))
             {
@@ -113,7 +115,6 @@ namespace PbLite.Generator
                 string subVar = $"_sub_{memberName}";
                 sb.AppendLine($"                    case {order}:");
                 sb.AppendLine("                    {");
-                sb.AppendLine($"                        {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64));");
                 sb.AppendLine($"                        var {subVar} = new ProtoReader(reader.ReadBytes());");
                 sb.AppendLine($"                        {accessor}.Add(({elemFullName}){nestedSerializer}.Instance.Deserialize(ref {subVar}, null));");
                 sb.AppendLine("                        break;");
@@ -141,7 +142,7 @@ namespace PbLite.Generator
 
             sb.AppendLine($"                    case {order}:");
             sb.AppendLine("                    {");
-            sb.AppendLine($"                        {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64));");
+            //sb.AppendLine($"                        {accessor}.EnsureCapacity((int)Math.Min(reader.Remaining / 8, 64));");
             sb.AppendLine($"                        var {subVar} = new ProtoReader(reader.ReadBytes());");
             sb.AppendLine($"                        {keyFullName} {keyVar} = default!;");
             sb.AppendLine($"                        {valFullName} {valVar} = default!;");
